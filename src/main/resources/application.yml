@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: demo
+  datasource:
+    url: jdbc:postgresql://localhost:5432/minibank
+    username: minibank
+    password: minibank
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+  security:
+    user:
+      name: actuatorAdmin
+      password: SuperSecurePassword2026 # Hãy thay bằng mật khẩu mạnh của bạn
+      roles: ACTUATOR_ADMIN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details= always:
