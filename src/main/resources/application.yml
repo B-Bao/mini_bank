@@ -12,22 +12,14 @@ spring:
       port: ${REDIS_PORT:6379}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     open-in-view: false
   flyway:
     enabled: true
 
+  # Chỗ này cũng cực kỳ nguy hiểm, hãy giấu pass của tài khoản Admin đi luôn bạn nhé!
   security:
     user:
-      name: ${ACTUATOR_ADMIN_USER:actuatorAdmin}
-      password: ${ACTUATOR_ADMIN_PASSWORD:SuperSecurePassword2026}
+      name: ${ACTUATOR_ADMIN_USER:admin}
+      password: ${ACTUATOR_ADMIN_PASSWORD:admin123}
       roles: ACTUATOR_ADMIN
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
-  endpoint:
-    health:
-      show-details: always

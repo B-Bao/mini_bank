@@ -1,20 +1,22 @@
 package com.example.demo;
 
+import jakarta.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.TimeZone;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.SecurityFilterChain;
 
 @SpringBootApplication
-@EnableWebSecurity
 public class DemoApplication {
+
+  @PostConstruct
+  public void init() {
+    // Ép JVM chạy chuẩn Asia/Ho_Chi_Minh thay vì Asia/Saigon cũ
+    TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+  }
 
   public static void main(String[] args) {
     // Tự động đọc file .env bằng Java thuần và nạp vào System Properties
@@ -52,32 +54,5 @@ public class DemoApplication {
     } catch (IOException e) {
       System.err.println("Không thể nạp file .env: " + e.getMessage());
     }
-  }
-
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http.csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(
-            auth ->
-                auth
-                    // 1. Health check công khai
-                    .requestMatchers("/actuator/health")
-                    .permitAll()
-
-                    // 2. Swagger & OpenAPI docs công khai
-                    .requestMatchers(
-                        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/**")
-                    .permitAll()
-
-                    // 3. Các Actuator còn lại yêu cầu authenticated
-                    .requestMatchers("/actuator/**")
-                    .authenticated()
-
-                    // 4. Mọi request nghiệp vụ khác
-                    .anyRequest()
-                    .authenticated())
-        .httpBasic(Customizer.withDefaults());
-
-    return http.build();
   }
 }
