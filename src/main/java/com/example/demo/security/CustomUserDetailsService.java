@@ -2,7 +2,7 @@ package com.example.demo.security;
 
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
-import java.util.Collections;
+import java.util.List;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -31,9 +31,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     return new org.springframework.security.core.userdetails.User(
         user.getUsername(),
         user.getPassword(),
-        Collections
-            .emptyList() // Tạm thời để danh sách quyền trống, sau này có phân quyền (Role) thì thêm
-        // vào đây
-        );
+        List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+            "ROLE_" + user.getRole())));
   }
 }

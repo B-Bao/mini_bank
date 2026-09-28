@@ -1,9 +1,14 @@
 package com.example.demo.exception;
 
-import com.example.demo.dto.ErrorResponse;
+import com.example.demo.exception.ErrorResponse;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.example.demo.exception.custom.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -11,15 +16,77 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+
+
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
   // 1. Bắt các lỗi RuntimeException thông thường (VD: User đã tồn tại, sai mật khẩu,...)
-  @ExceptionHandler(RuntimeException.class)
-  public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
-    ErrorResponse error =
-        new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage(), LocalDateTime.now());
+  private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+      // 1. Bắt lỗi không tìm thấy tài nguyên (404 NOT FOUND)
+  @ExceptionHandler(ResourceNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.NOT_FOUND.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+    );
+    return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+  }
+
+      // 2. Bắt lỗi trùng lặp dữ liệu / vi phạm tính duy nhất (409 CONFLICT)
+  @ExceptionHandler(DuplicateResourceException.class)
+  public ResponseEntity<ErrorResponse> handleDuplicateResource(DuplicateResourceException ex) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.CONFLICT.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+    );
+    return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+  }
+
+      // 3. Bắt lỗi nghiệp vụ / Bad Request chung (400 BAD REQUEST)
+  @ExceptionHandler(BadRequestException.class)
+  public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+    );
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+      // 4. Bắt lỗi chưa đăng nhập / token không hợp lệ (401 UNAUTHORIZED)
+  @ExceptionHandler(UnauthorizedException.class)
+  public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+    );
+    return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+  }
+
+      // 5. Bắt lỗi không có quyền thực hiện hành động (403 FORBIDDEN)
+  @ExceptionHandler(ForbiddenException.class)
+  public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.FORBIDDEN.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+    );
+    return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+  }
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    ErrorResponse error = new ErrorResponse(
+            HttpStatus.CONFLICT.value(),
+            "Dữ liệu bị trùng lặp (ví dụ: số tài khoản hoặc email đã tồn tại trong hệ thống).",
+            LocalDateTime.now()
+    );
+    return new ResponseEntity<>(error, HttpStatus.CONFLICT);
   }
 
   // 2. Bắt các lỗi do `@Valid` (VD: để trống trường, email sai định dạng,...)
@@ -44,7 +111,7 @@ public class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Lỗi hệ thống nội bộ: " + ex.getMessage(),
+            "Lỗi hệ thống nội bộ: " ,
             LocalDateTime.now());
     return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
   }
