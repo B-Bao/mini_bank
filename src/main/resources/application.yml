@@ -16,6 +16,8 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+    clean-on-start: true
+    clean-disable: false
   security:
     user:
       name: ${ACTUATOR_ADMIN_USER:admin}

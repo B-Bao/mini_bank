@@ -111,8 +111,11 @@ public class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Lỗi hệ thống nội bộ: " ,
+            "Lỗi hệ thống nội bộ: ??" ,
             LocalDateTime.now());
     return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
   }
+  //hiện tại đang có 2 exeption chưa được gắn vào
+  // 1 là lỗi kiểm tra userID không hề tồn tại trong bảng user ( bị lỗi phân quyền IDOR bắt trước nên lỗi này sẽ không hiển thị)
+  // 2 là lỗi chưa phân biệt được loại tiền tệ không được hỗ trợ
 }
