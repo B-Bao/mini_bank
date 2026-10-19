@@ -1,8 +1,8 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.JwtResponse;
-import com.example.demo.dto.LoginRequest;
-import com.example.demo.dto.RegisterRequest;
+import com.example.demo.dto.auth.JwtResponse;
+import com.example.demo.dto.auth.LoginRequest;
+import com.example.demo.dto.auth.RegisterRequest;
 import com.example.demo.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -32,4 +32,6 @@ public class AuthController {
     JwtResponse jwtResponse = authService.login(loginRequest);
     return ResponseEntity.ok(jwtResponse);
   }
+
+
 }

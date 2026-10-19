@@ -12,13 +12,18 @@ spring:
       port: ${REDIS_PORT:6379}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
   flyway:
     enabled: true
-
+    clean-on-start: true
+    clean-disable: false
   security:
     user:
       name: ${ACTUATOR_ADMIN_USER:admin}
       password: ${ACTUATOR_ADMIN_PASSWORD:change_me_in_env}
       roles: ACTUATOR_ADMIN
+jwt:
+  secret: ${JWT_SECRET:defaultSecretKeyForLocalDevOnlyMin32BytesLong}
+  expiration: 900000
+  refresh-expiration: 604800000
