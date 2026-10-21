@@ -6,9 +6,9 @@ import lombok.Data;
 
 @Data
 public class CreateAccountRequest {
-    @NotNull(message = "User ID không được để trống")
-    private Long userId;
+  @NotNull(message = "User ID không được để trống")
+  private Long userId;
 
-    @NotBlank(message = "Đơn vị tiền tệ không được để trống")
-    private String currency;
+  @NotBlank(message = "Đơn vị tiền tệ không được để trống")
+  private String currency;
 }
