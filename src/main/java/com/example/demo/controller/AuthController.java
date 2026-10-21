@@ -32,4 +32,6 @@ public class AuthController {
     JwtResponse jwtResponse = authService.login(loginRequest);
     return ResponseEntity.ok(jwtResponse);
   }
+
+
 }
