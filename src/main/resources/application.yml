@@ -18,6 +18,8 @@ spring:
     enabled: true
     clean-on-start: true
     clean-disable: false
+    baseline-on-migrate: true
+    out-of-order: true
   security:
     user:
       name: ${ACTUATOR_ADMIN_USER:admin}

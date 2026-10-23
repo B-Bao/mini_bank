@@ -97,6 +97,17 @@ public class GlobalExceptionHandler {
             LocalDateTime.now());
     return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
   }
+
+  // Bắt lỗi tài khoản không active
+  @ExceptionHandler(AccountNotActiveException.class)
+  public ResponseEntity<Map<String, Object>> handleAccountNotActive(AccountNotActiveException ex) {
+    Map<String, Object> errorResponse = new HashMap<>();
+    errorResponse.put("timestamp", LocalDateTime.now());
+    errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
+    errorResponse.put("error", "Account Not Active");
+    errorResponse.put("message", ex.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
   // hiện tại đang có 2 exeption chưa được gắn vào
   // 1 là lỗi kiểm tra userID không hề tồn tại trong bảng user ( bị lỗi phân quyền IDOR bắt trước
   // nên lỗi này sẽ không hiển thị)
