@@ -1,0 +1,115 @@
+mini_bank/
+├── .env
+├── .env.example
+├── .gitattributes
+├── .github/
+│   ├── pull_request_template.md
+│   └── workflows/
+│       └── ci.yml
+├── .gitignore
+├── .idea/
+│   ├── .gitignore
+│   ├── compiler.xml
+│   ├── encodings.xml
+│   ├── httpRequests/
+│   ├── inspectionProfiles/
+│   ├── jarRepositories.xml
+│   ├── misc.xml
+│   ├── modules.xml
+│   ├── vcs.xml
+│   └── workspace.xml
+├── .mvn/
+│   └── wrapper/
+│       └── maven-wrapper.properties
+├── .postman/
+│   └── resources.yaml
+├── demo.iml
+├── docker-compose.yml
+├── HELP.md
+├── mvnw
+├── mvnw.cmd
+├── pom.xml
+├── postman/
+│   ├── collections/
+│   ├── documents/
+│   ├── environments/
+│   ├── flows/
+│   ├── globals/
+│   │   └── workspace.globals.yaml
+│   ├── mocks/
+│   └── specs/
+├── README.md
+└── src/
+    ├── main/
+    │   ├── java/
+    │   │   └── com/
+    │   │       └── example/
+    │   │           └── demo/
+    │   │               ├── config/
+    │   │               │   └── SecurityConfig.java
+    │   │               ├── controller/
+    │   │               │   ├── AccountController.java
+    │   │               │   ├── AuthController.java
+    │   │               │   ├── LedgerController.java
+    │   │               │   └── TransactionController.java
+    │   │               ├── DemoApplication.java
+    │   │               ├── domain/
+    │   │               │   └── Money.java
+    │   │               ├── dto/
+    │   │               │   ├── account/
+    │   │               │   │   ├── AccountResponse.java
+    │   │               │   │   └── CreateAccountRequest.java
+    │   │               │   ├── auth/
+    │   │               │   │   ├── JwtResponse.java
+    │   │               │   │   ├── LoginRequest.java
+    │   │               │   │   └── RegisterRequest.java
+    │   │               │   ├── tranfer/
+    │   │               │   │   └── TransferRequest.java
+    │   │               │   └── transaction/
+    │   │               │       └── DepositRequestDTO.java
+    │   │               ├── entity/
+    │   │               │   ├── Account.java
+    │   │               │   ├── LedgerEntry.java
+    │   │               │   ├── Transaction.java
+    │   │               │   └── User.java
+    │   │               ├── exception/
+    │   │               │   ├── custom/
+    │   │               │   │   ├── AccountNotActiveException.java
+    │   │               │   │   ├── BadRequestException.java
+    │   │               │   │   ├── DuplicateResourceException.java
+    │   │               │   │   ├── ForbiddenException.java
+    │   │               │   │   ├── ResourceNotFoundException.java
+    │   │               │   │   └── UnauthorizedException.java
+    │   │               │   ├── ErrorResponse.java
+    │   │               │   └── GlobalExceptionHandler.java
+    │   │               ├── repository/
+    │   │               │   ├── AccountRepository.java
+    │   │               │   ├── LedgerEntryRepository.java
+    │   │               │   ├── TransactionRepository.java
+    │   │               │   └── UserRepository.java
+    │   │               ├── security/
+    │   │               │   ├── CustomUserDetailsService.java
+    │   │               │   └── jwt/
+    │   │               │       ├── JwtAuthenticationFilter.java
+    │   │               │       └── JwtTokenProvider.java
+    │   │               └── service/
+    │   │                   ├── AccountService.java
+    │   │                   ├── AuthService.java
+    │   │                   ├── LedgerService.java
+    │   │                   └── TransactionService.java
+    │   └── resources/
+    │       ├── application.yml
+    │       └── db/
+    │           └── migration/
+    │               ├── V1__init.sql
+    │               ├── V2__create_accounts_table.sql
+    │               ├── V3__add_user_role.sql
+    │               ├── V4__add_indexes_to_accounts.sql
+    │               ├── V5__create_transactions_table.sql
+    │               └── V6__create_ledger_entries_table.sql
+    └── test/
+        └── java/
+            └── com/
+                └── example/
+                    └── demo/
+                        └── DemoApplicationTests.java
