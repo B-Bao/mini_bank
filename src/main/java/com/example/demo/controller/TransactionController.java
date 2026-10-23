@@ -12,12 +12,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/transactions")
 public class TransactionController {
 
-    @Autowired
-    private TransactionService transactionService;
+  @Autowired private TransactionService transactionService;
 
-    @PostMapping("/deposit")
-    public ResponseEntity<Transaction> deposit(@Valid @RequestBody DepositRequestDTO request) {
-        Transaction savedTransaction = transactionService.processDeposit(request);
-        return ResponseEntity.ok(savedTransaction);
-    }
+  @PostMapping("/deposit")
+  public ResponseEntity<Transaction> deposit(@Valid @RequestBody DepositRequestDTO request) {
+    Transaction savedTransaction = transactionService.processDeposit(request);
+    return ResponseEntity.ok(savedTransaction);
+  }
 }

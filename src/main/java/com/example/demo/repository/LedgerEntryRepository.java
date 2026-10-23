@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> {
 
-    // Truy vấn lịch sử bút toán theo account_id có phân trang, sắp xếp mới nhất lên đầu
-    Page<LedgerEntry> findByAccountIdOrderByCreatedAtDesc(Long accountId, Pageable pageable);
+  // Truy vấn lịch sử bút toán theo account_id có phân trang, sắp xếp mới nhất lên đầu
+  Page<LedgerEntry> findByAccountIdOrderByCreatedAtDesc(Long accountId, Pageable pageable);
 }

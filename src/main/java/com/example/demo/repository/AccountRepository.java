@@ -1,10 +1,9 @@
 package com.example.demo.repository;
 
 import com.example.demo.entity.Account;
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
-
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query; // Import chuẩn Spring JPA Query

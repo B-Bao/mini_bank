@@ -16,21 +16,22 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class LedgerController {
 
-    private final LedgerService ledgerService;
+  private final LedgerService ledgerService;
 
-    @GetMapping("/{account_id}/ledger-entries")
-    public ResponseEntity<Page<LedgerEntry>> getAccountLedgerEntries(
-            @PathVariable("account_id") Long accountId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            Authentication authentication) {
+  @GetMapping("/{account_id}/ledger-entries")
+  public ResponseEntity<Page<LedgerEntry>> getAccountLedgerEntries(
+      @PathVariable("account_id") Long accountId,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      Authentication authentication) {
 
-        // Chỉ lấy username từ token rồi ném thẳng xuống Service xử lý toàn bộ logic & chống IDOR
-        String currentUsername = authentication.getName();
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    // Chỉ lấy username từ token rồi ném thẳng xuống Service xử lý toàn bộ logic & chống IDOR
+    String currentUsername = authentication.getName();
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        Page<LedgerEntry> entries = ledgerService.getLedgerEntriesByAccount(accountId, currentUsername, pageable);
+    Page<LedgerEntry> entries =
+        ledgerService.getLedgerEntriesByAccount(accountId, currentUsername, pageable);
 
-        return ResponseEntity.ok(entries);
-    }
+    return ResponseEntity.ok(entries);
+  }
 }
