@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.dto.transaction.DepositRequestDTO;
 import com.example.demo.entity.Account;
+import com.example.demo.entity.LedgerEntry;
 import com.example.demo.entity.Transaction;
 import com.example.demo.exception.custom.AccountNotActiveException;
 import com.example.demo.repository.AccountRepository;
@@ -23,14 +24,17 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
+    private final LedgerService ledgerService;
 
-    // Constructor Injection (Sạch warning, chuẩn best practice)
+    // Constructor Injection chuẩn Best Practice
     public TransactionService(TransactionRepository transactionRepository,
                               AccountRepository accountRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              LedgerService ledgerService) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
+        this.ledgerService = ledgerService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -93,11 +97,28 @@ public class TransactionService {
         tx.setValueDate(LocalDate.now());
         tx.setCompletedAt(OffsetDateTime.now());
 
-        // 8. Cập nhật cộng tiền vào số dư tài khoản
-        receiverAccount.setBalance(receiverAccount.getBalance().add(request.getAmount()));
+        // Lưu transaction trước để sinh ra transaction_id (UUID)
+        Transaction savedTx = transactionRepository.save(tx);
+
+        // 8. Lưu vết số dư trước và sau khi cộng tiền (Phục vụ đối soát kế toán)
+        BigDecimal balanceBefore = receiverAccount.getBalance();
+        BigDecimal balanceAfter = balanceBefore.add(request.getAmount());
+
+        receiverAccount.setBalance(balanceAfter);
         accountRepository.save(receiverAccount);
 
-        // 9. Lưu lịch sử giao dịch xuống database và trả về
-        return transactionRepository.save(tx);
+        // 9. GHI NHẬN SỔ CÁI (LEDGER ENTRY) - Bút toán CREDIT (Ghi Có) tăng tiền tài khoản khách hàng
+        ledgerService.recordEntry(
+                savedTx.getTransactionId(),
+                receiverAccount.getAccountsId(),
+                LedgerEntry.EntryType.CREDIT,
+                request.getAmount(),
+                balanceBefore,
+                balanceAfter,
+                "Nạp tiền thành công qua cổng thanh toán - Ref: " + request.getReferenceNumber()
+        );
+
+        // 10. Trả về thông tin giao dịch đã lưu
+        return savedTx;
     }
 }
