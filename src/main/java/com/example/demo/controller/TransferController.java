@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class TransferController {
 
-    private final TransferService transferService;
+  private final TransferService transferService;
 
-    @PostMapping
-    public ResponseEntity<Transfer> transferMoney(@Valid @RequestBody TransferRequest request) {
-        Transfer transfer = transferService.executeTransfer(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(transfer);
-    }
+  @PostMapping
+  public ResponseEntity<Transfer> transferMoney(@Valid @RequestBody TransferRequest request) {
+    Transfer transfer = transferService.executeTransfer(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(transfer);
+  }
 }
