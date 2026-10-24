@@ -8,13 +8,12 @@ import com.example.demo.exception.custom.BadRequestException;
 import com.example.demo.exception.custom.ResourceNotFoundException;
 import com.example.demo.repository.AccountRepository;
 import com.example.demo.repository.TransferRepository;
+import java.math.BigDecimal;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +31,8 @@ public class TransferService {
         return executeTransferInternal(request);
       } catch (ObjectOptimisticLockingFailureException e) {
         if (attempt == maxRetries) {
-          throw new RuntimeException("Giao dịch thất bại do xung đột đồng thời quá lớn, vui lòng thử lại sau.", e);
+          throw new RuntimeException(
+              "Giao dịch thất bại do xung đột đồng thời quá lớn, vui lòng thử lại sau.", e);
         }
         try {
           Thread.sleep(50 * attempt); // Chờ ngắn trước khi thử lại
@@ -52,15 +52,27 @@ public class TransferService {
     }
 
     // 2. Tìm kiếm 2 tài khoản
-    Account sourceAccount = accountRepository.findByAccountNumber(request.getSourceAccountNumber())
-            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản nguồn: " + request.getSourceAccountNumber()));
+    Account sourceAccount =
+        accountRepository
+            .findByAccountNumber(request.getSourceAccountNumber())
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "Không tìm thấy tài khoản nguồn: " + request.getSourceAccountNumber()));
 
-    Account destinationAccount = accountRepository.findByAccountNumber(request.getDestinationAccountNumber())
-            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản đích: " + request.getDestinationAccountNumber()));
+    Account destinationAccount =
+        accountRepository
+            .findByAccountNumber(request.getDestinationAccountNumber())
+            .orElseThrow(
+                () ->
+                    new ResourceNotFoundException(
+                        "Không tìm thấy tài khoản đích: " + request.getDestinationAccountNumber()));
 
     // 3. Kiểm tra trạng thái tài khoản
-    if (!"ACTIVE".equalsIgnoreCase(sourceAccount.getStatus()) || !"ACTIVE".equalsIgnoreCase(destinationAccount.getStatus())) {
-      throw new AccountNotActiveException("Một trong hai tài khoản đang không ở trạng thái hoạt động");
+    if (!"ACTIVE".equalsIgnoreCase(sourceAccount.getStatus())
+        || !"ACTIVE".equalsIgnoreCase(destinationAccount.getStatus())) {
+      throw new AccountNotActiveException(
+          "Một trong hai tài khoản đang không ở trạng thái hoạt động");
     }
 
     // 4. Kiểm tra số dư tài khoản nguồn (Amount + Fee)
@@ -78,10 +90,12 @@ public class TransferService {
     accountRepository.save(destinationAccount);
 
     // 7. Tạo mã giao dịch chung
-    String referenceCode = "TRF" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+    String referenceCode =
+        "TRF" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
 
     // 8. Lưu lịch sử chuyển khoản vào bảng transfers
-    Transfer transfer = Transfer.builder()
+    Transfer transfer =
+        Transfer.builder()
             .referenceCode(referenceCode)
             .sourceAccountId(sourceAccount.getAccountsId())
             .destinationAccountId(destinationAccount.getAccountsId())
@@ -96,14 +110,13 @@ public class TransferService {
 
     // 9. Ghi sổ cái kép (Ledger Entries)
     ledgerService.recordTransferEntry(
-            referenceCode,
-            sourceAccount,
-            destinationAccount,
-            request.getAmount(),
-            request.getFee(),
-            request.getCurrency(),
-            request.getDescription()
-    );
+        referenceCode,
+        sourceAccount,
+        destinationAccount,
+        request.getAmount(),
+        request.getFee(),
+        request.getCurrency(),
+        request.getDescription());
 
     return savedTransfer;
   }
