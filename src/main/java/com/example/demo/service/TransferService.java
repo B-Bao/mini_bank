@@ -8,11 +8,13 @@ import com.example.demo.exception.custom.BadRequestException;
 import com.example.demo.exception.custom.ResourceNotFoundException;
 import com.example.demo.repository.AccountRepository;
 import com.example.demo.repository.TransferRepository;
-import java.math.BigDecimal;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -20,60 +22,66 @@ public class TransferService {
 
   private final AccountRepository accountRepository;
   private final TransferRepository transferRepository;
-  private final LedgerService ledgerService; // Inject LedgerService để ghi bút toán sổ cái
+  private final LedgerService ledgerService;
+
+  // Cơ chế retry thủ công tối ưu cho Optimistic Locking (Không cần spring-retry)
+  public Transfer executeTransfer(TransferRequest request) {
+    int maxRetries = 3;
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return executeTransferInternal(request);
+      } catch (ObjectOptimisticLockingFailureException e) {
+        if (attempt == maxRetries) {
+          throw new RuntimeException("Giao dịch thất bại do xung đột đồng thời quá lớn, vui lòng thử lại sau.", e);
+        }
+        try {
+          Thread.sleep(50 * attempt); // Chờ ngắn trước khi thử lại
+        } catch (InterruptedException ignored) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+    throw new RuntimeException("Không thể hoàn thành giao dịch chuyển khoản.");
+  }
 
   @Transactional
-  public Transfer executeTransfer(TransferRequest request) {
+  protected Transfer executeTransferInternal(TransferRequest request) {
     // 1. Kiểm tra tài khoản nguồn và đích không được trùng nhau
     if (request.getSourceAccountNumber().equals(request.getDestinationAccountNumber())) {
       throw new BadRequestException("Tài khoản nguồn và tài khoản đích phải khác nhau");
     }
 
-    // 2. Lấy thông tin tài khoản nguồn (Khóa bi quan chống race condition)
-    Account sourceAccount =
-        accountRepository
-            .findByAccountNumberWithLock(request.getSourceAccountNumber())
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "Không tìm thấy tài khoản nguồn: " + request.getSourceAccountNumber()));
+    // 2. Tìm kiếm 2 tài khoản
+    Account sourceAccount = accountRepository.findByAccountNumber(request.getSourceAccountNumber())
+            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản nguồn: " + request.getSourceAccountNumber()));
 
-    // 3. Lấy thông tin tài khoản đích
-    Account destinationAccount =
-        accountRepository
-            .findByAccountNumberWithLock(request.getDestinationAccountNumber())
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "Không tìm thấy tài khoản đích: " + request.getDestinationAccountNumber()));
+    Account destinationAccount = accountRepository.findByAccountNumber(request.getDestinationAccountNumber())
+            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản đích: " + request.getDestinationAccountNumber()));
 
-    // 4. Kiểm tra trạng thái tài khoản
-    if (!"ACTIVE".equalsIgnoreCase(sourceAccount.getStatus())
-        || !"ACTIVE".equalsIgnoreCase(destinationAccount.getStatus())) {
-      throw new AccountNotActiveException(
-          "Một trong hai tài khoản đang không ở trạng thái hoạt động");
+    // 3. Kiểm tra trạng thái tài khoản
+    if (!"ACTIVE".equalsIgnoreCase(sourceAccount.getStatus()) || !"ACTIVE".equalsIgnoreCase(destinationAccount.getStatus())) {
+      throw new AccountNotActiveException("Một trong hai tài khoản đang không ở trạng thái hoạt động");
     }
 
-    // 5. Tính tổng số tiền trừ (Amount + Fee)
+    // 4. Kiểm tra số dư tài khoản nguồn (Amount + Fee)
     BigDecimal totalDebit = request.getAmount().add(request.getFee());
     if (sourceAccount.getBalance().compareTo(totalDebit) < 0) {
       throw new BadRequestException("Số dư tài khoản nguồn không đủ để thực hiện giao dịch");
     }
 
-    // 6. Thực hiện trừ tiền nguồn và cộng tiền đích
+    // 5. Thực hiện trừ tiền nguồn, cộng tiền đích
     sourceAccount.setBalance(sourceAccount.getBalance().subtract(totalDebit));
     destinationAccount.setBalance(destinationAccount.getBalance().add(request.getAmount()));
 
+    // 6. Lưu thay đổi (Optimistic Lock tự động kiểm tra cột @Version)
     accountRepository.save(sourceAccount);
     accountRepository.save(destinationAccount);
 
-    // 7. Tạo mã giao dịch chung (Reference Code)
-    String referenceCode =
-        "TRF" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+    // 7. Tạo mã giao dịch chung
+    String referenceCode = "TRF" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
 
-    // 8. Lưu lịch sử giao dịch chuyển khoản vào bảng transfers
-    Transfer transfer =
-        Transfer.builder()
+    // 8. Lưu lịch sử chuyển khoản vào bảng transfers
+    Transfer transfer = Transfer.builder()
             .referenceCode(referenceCode)
             .sourceAccountId(sourceAccount.getAccountsId())
             .destinationAccountId(destinationAccount.getAccountsId())
@@ -86,17 +94,16 @@ public class TransferService {
 
     Transfer savedTransfer = transferRepository.save(transfer);
 
-    // 9. Ghi sổ cái (Ledger Entries) cho giao dịch chuyển khoản
-    // Tùy theo cách thiết kế của LedgerService trong project của bạn, bạn có thể gọi phương thức
-    // ghi sổ cái tương ứng:
+    // 9. Ghi sổ cái kép (Ledger Entries)
     ledgerService.recordTransferEntry(
-        referenceCode,
-        sourceAccount,
-        destinationAccount,
-        request.getAmount(),
-        request.getFee(),
-        request.getCurrency(),
-        request.getDescription());
+            referenceCode,
+            sourceAccount,
+            destinationAccount,
+            request.getAmount(),
+            request.getFee(),
+            request.getCurrency(),
+            request.getDescription()
+    );
 
     return savedTransfer;
   }

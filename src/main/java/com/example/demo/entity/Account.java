@@ -36,6 +36,10 @@ public class Account {
   @Column(name = "status", nullable = false, length = 20)
   private String status = "ACTIVE";
 
+  @Version
+  @Column(nullable = false)
+  private long version;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
