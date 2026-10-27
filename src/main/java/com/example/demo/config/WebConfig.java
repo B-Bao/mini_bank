@@ -10,15 +10,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
 
-    private final IdempotencyInterceptor idempotencyInterceptor;
+  private final IdempotencyInterceptor idempotencyInterceptor;
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(idempotencyInterceptor)
-                .addPathPatterns(
-                        "/api/v1/transfers/**",
-                        "/api/v1/deposits/**",
-                        "/api/v1/transactions/**"
-                );
-    }
+  @Override
+  public void addInterceptors(InterceptorRegistry registry) {
+    registry
+        .addInterceptor(idempotencyInterceptor)
+        .addPathPatterns("/api/v1/transfers/**", "/api/v1/deposits/**", "/api/v1/transactions/**");
+  }
 }
