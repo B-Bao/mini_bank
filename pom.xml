@@ -19,6 +19,17 @@
 	</properties>
 
 	<dependencies>
+		<!-- thêm dependency mới -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<!-- thêm dependency redis-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
 		<!-- JJWT Libraries for JWT Generation & Parsing -->
 		<!-- JJWT API -->
 		<dependency>
