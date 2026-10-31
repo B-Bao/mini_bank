@@ -93,7 +93,7 @@ public class GlobalExceptionHandler {
     ErrorResponse error =
         new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Lỗi hệ thống nội bộ: ??",
+            "Lỗi hệ thống nội bộ: " + ex.getMessage(),
             LocalDateTime.now());
     return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
   }
