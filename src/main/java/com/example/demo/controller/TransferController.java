@@ -1,9 +1,10 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.transfer.TransferRequest;
-import com.example.demo.entity.Transfer;
+import com.example.demo.dto.transfer.TransferResponse;
 import com.example.demo.service.TransferService;
 import jakarta.validation.Valid;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +18,10 @@ public class TransferController {
   private final TransferService transferService;
 
   @PostMapping
-  public ResponseEntity<Transfer> transferMoney(@Valid @RequestBody TransferRequest request) {
-    Transfer transfer = transferService.executeTransfer(request);
-    return ResponseEntity.status(HttpStatus.CREATED).body(transfer);
+  public ResponseEntity<TransferResponse> transferMoney(
+      @Valid @RequestBody TransferRequest request, Principal principal) {
+    String currentUsername = principal.getName();
+    TransferResponse response = transferService.executeTransfer(request, currentUsername);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 }

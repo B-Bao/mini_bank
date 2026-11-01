@@ -16,8 +16,8 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
-    clean-on-start: true
-    clean-disable: false
+    clean-on-start: false
+    clean-disable: true
     baseline-on-migrate: true
     out-of-order: true
   security:
