@@ -5,6 +5,7 @@ import com.example.demo.dto.statement.StatementItemDTO;
 import com.example.demo.entity.Account;
 import com.example.demo.entity.LedgerEntry;
 import com.example.demo.entity.User;
+import com.example.demo.exception.custom.BadRequestException;
 import com.example.demo.exception.custom.ResourceNotFoundException;
 import com.example.demo.repository.AccountRepository;
 import com.example.demo.repository.LedgerEntryRepository;
@@ -46,7 +47,10 @@ public class AccountStatementService {
         if (!account.getUserId().equals(currentUser.getId())) {
             throw new AccessDeniedException("Bạn không có quyền truy cập vào sao kê của tài khoản này!");
         }
-
+        // validate khoảng thời gian
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new BadRequestException("Khoảng thời gian không hợp lệ: 'fromDate' phải nhỏ hơn hoặc bằng 'toDate'.");
+        }
         // thực hiện xử lý lọc và phân trang
         OffsetDateTime startDateTime = (fromDate != null) ? fromDate.atStartOfDay().atOffset(ZoneOffset.UTC) : null;
         OffsetDateTime endDateTime = (toDate != null) ? toDate.atTime(23, 59, 59).atOffset(ZoneOffset.UTC) : null;
@@ -56,6 +60,7 @@ public class AccountStatementService {
             try {
                 entryType = LedgerEntry.EntryType.valueOf(typeStr.toUpperCase());
             } catch (IllegalArgumentException ignored) {
+                throw new BadRequestException("Loại giao dịch (type) không hợp lệ: '" + typeStr + "'. Các giá trị được phép: DEBIT, CREDIT.");
             }
         }
 
@@ -80,16 +85,28 @@ public class AccountStatementService {
         Page<LedgerEntry> ledgerPage = ledgerEntryRepository.findAll(specification, pageable);
 
         List<StatementItemDTO> items = ledgerPage.getContent().stream()
-                .map(ledger -> StatementItemDTO.builder()
-                        .referenceCode(ledger.getTransactionId() != null ? ledger.getTransactionId().toString() : null)
-                        .transactionType(ledger.getEntryType() != null ? ledger.getEntryType().name() : null)
-                        .amount(ledger.getAmount())
-                        .fee(java.math.BigDecimal.ZERO)
-                        .currency("VND")
-                        .balanceAfter(ledger.getBalanceAfter())
-                        .description(ledger.getDescription())
-                        .createdAt(ledger.getCreatedAt() != null ? ledger.getCreatedAt().toLocalDateTime() : null)
-                        .build())
+                .map(ledger -> {
+                    String refCode = ledger.getTransactionId() != null ? ledger.getTransactionId().toString() : null;
+                    if (ledger.getDescription() != null) {
+                        if (ledger.getDescription().contains("Ref: ")) {
+                            int idx = ledger.getDescription().indexOf("Ref: ");
+                            refCode = ledger.getDescription().substring(idx + 5).trim();
+                        } else if (ledger.getDescription().contains("Chuyển tiền đến ") || ledger.getDescription().contains("Nhận tiền từ ")) {
+                        }
+                    }
+
+                    return StatementItemDTO.builder()
+                            .referenceCode(refCode)
+                            .transactionType(ledger.getEntryType() != null ? ledger.getEntryType().name() : null)
+                            .amount(ledger.getAmount())
+                            .fee(java.math.BigDecimal.ZERO)
+                            .currency("VND")
+                            .balanceAfter(ledger.getBalanceAfter())
+                            .description(ledger.getDescription())
+                            .counterAccount(null)
+                            .createdAt(ledger.getCreatedAt() != null ? ledger.getCreatedAt().toLocalDateTime() : null)
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         return PagedResponseDTO.<StatementItemDTO>builder()
