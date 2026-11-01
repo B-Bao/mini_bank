@@ -24,13 +24,13 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
 
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-          throws Exception {
+      throws Exception {
     String method = request.getMethod();
     String requestURI = request.getRequestURI();
 
     boolean isPostOrPut = "POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method);
     boolean isFinancialEndpoint =
-            requestURI.contains("/transfers") || requestURI.contains("/deposits");
+        requestURI.contains("/transfers") || requestURI.contains("/deposits");
 
     if (isPostOrPut && isFinancialEndpoint) {
       String idempotencyKey = request.getHeader(IDEMPOTENCY_HEADER_KEY);
@@ -39,13 +39,13 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         response.setContentType("application/json;charset=UTF-8");
         response
-                .getWriter()
-                .write(
-                        "{\"error\": \"Missing required header: Idempotency-Key for "
-                                + method
-                                + " "
-                                + requestURI
-                                + "\"}");
+            .getWriter()
+            .write(
+                "{\"error\": \"Missing required header: Idempotency-Key for "
+                    + method
+                    + " "
+                    + requestURI
+                    + "\"}");
         return false;
       }
 
@@ -55,8 +55,8 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         response.setContentType("application/json;charset=UTF-8");
         response
-                .getWriter()
-                .write("{\"error\": \"Invalid Idempotency-Key format. Must be a valid UUID v4.\"}");
+            .getWriter()
+            .write("{\"error\": \"Invalid Idempotency-Key format. Must be a valid UUID v4.\"}");
         return false;
       }
 
@@ -69,7 +69,9 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
         response.setContentType("application/json;charset=UTF-8");
         if ("PROCESSING".equals(cachedValue)) {
           response.setStatus(HttpStatus.CONFLICT.value());
-          response.getWriter().write("{\"error\": \"Giao dịch đang được xử lý, vui lòng thử lại sau.\"}");
+          response
+              .getWriter()
+              .write("{\"error\": \"Giao dịch đang được xử lý, vui lòng thử lại sau.\"}");
         } else if (cachedValue != null) {
           // Khôi phục đúng cấu trúc JSON đã cache (bao gồm status thực tế và body)
           try {
@@ -101,16 +103,20 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
   }
 
   @Override
-  public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+  public void afterCompletion(
+      HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
+      throws Exception {
     String idempotencyKey = (String) request.getAttribute("IDEMPOTENCY_KEY");
-    ContentCachingResponseWrapper wrapper = (ContentCachingResponseWrapper) request.getAttribute("CACHED_RESPONSE_WRAPPER");
+    ContentCachingResponseWrapper wrapper =
+        (ContentCachingResponseWrapper) request.getAttribute("CACHED_RESPONSE_WRAPPER");
     if (idempotencyKey != null && wrapper != null) {
       if (response.getStatus() >= 200 && response.getStatus() < 300 && ex == null) {
         byte[] content = wrapper.getContentAsByteArray();
         if (content.length > 0) {
           try {
             Object bodyObj = objectMapper.readValue(content, Object.class);
-            redisIdempotencyService.cacheResponse(idempotencyKey, bodyObj, wrapper.getStatus(), 300);
+            redisIdempotencyService.cacheResponse(
+                idempotencyKey, bodyObj, wrapper.getStatus(), 300);
           } catch (Exception ignored) {
 
           }

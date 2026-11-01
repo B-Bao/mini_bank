@@ -19,7 +19,7 @@ public class TransferController {
 
   @PostMapping
   public ResponseEntity<TransferResponse> transferMoney(
-          @Valid @RequestBody TransferRequest request, Principal principal) {
+      @Valid @RequestBody TransferRequest request, Principal principal) {
     String currentUsername = principal.getName();
     TransferResponse response = transferService.executeTransfer(request, currentUsername);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
